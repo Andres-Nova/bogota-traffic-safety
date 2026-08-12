@@ -3,15 +3,21 @@ Página 2 — Mapa de Siniestros
 
 Mapa interactivo con puntos georreferenciados de siniestros viales en Bogotá.
 Filtros por año y gravedad. Muestra top intersecciones más peligrosas.
+Opción de capa de riesgo predicho por el modelo LightGBM.
 """
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import numpy as np
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-from utils import cargar_datos, sidebar_filtros, COLORES_GRAVEDAD, ORDEN_GRAVEDAD
+from utils import (
+    cargar_datos, sidebar_filtros,
+    COLORES_GRAVEDAD, ORDEN_GRAVEDAD,
+    cargar_modelo,
+)
 
 st.set_page_config(page_title="Mapa — Siniestralidad Bogotá", page_icon="🗺️", layout="wide")
 st.title("🗺️ Mapa de Siniestros Viales")
@@ -35,39 +41,99 @@ max_puntos = st.sidebar.slider(
 opacidad = st.sidebar.slider("Opacidad puntos", 0.1, 1.0, 0.4, step=0.1)
 tamano = st.sidebar.slider("Tamaño puntos", 2, 10, 4)
 
+st.sidebar.divider()
+colorear_riesgo = st.sidebar.checkbox(
+    "🔮 Colorear por riesgo predicho",
+    value=False,
+    help="Aplica el modelo LightGBM para estimar el riesgo de cada punto. "
+         "Puede tardar unos segundos.",
+)
+
 # ── Muestrear si hay muchos puntos ────────────────────────────────────────────
 if len(df) > max_puntos:
     df_mapa = df.sample(max_puntos, random_state=42)
     st.info(f"Mostrando {max_puntos:,} de {len(df):,} siniestros (muestra aleatoria).")
 else:
-    df_mapa = df
+    df_mapa = df.copy()
+
+# ── Capa de riesgo predicho (opt-in) ──────────────────────────────────────────
+COLORES_RIESGO  = {'Bajo': '#22C55E', 'Medio': '#F59E0B', 'Alto': '#EF4444'}
+ORDEN_RIESGO    = ['Bajo', 'Medio', 'Alto']
+UMBRAL_ALTO     = 0.70
+UMBRAL_MEDIO    = 0.35
+
+if colorear_riesgo:
+    with st.spinner("Calculando riesgo predicho con el modelo LightGBM…"):
+        try:
+            from src.features.build_features import FEATURES_COLS, construir_features, TARGET_COL
+            pipeline, kmeans = cargar_modelo()
+
+            # Construir features para los puntos del mapa
+            X_mapa, _ = construir_features(df_mapa.copy(), kmeans=kmeans)
+            probas = pipeline.predict_proba(X_mapa)[:, 1]
+
+            df_mapa = df_mapa.copy()
+            df_mapa['RIESGO_PREDICHO'] = probas
+            df_mapa['RIESGO_ETIQUETA'] = pd.cut(
+                probas,
+                bins=[-np.inf, UMBRAL_MEDIO, UMBRAL_ALTO, np.inf],
+                labels=['Bajo', 'Medio', 'Alto'],
+            ).astype(str)
+
+            color_col   = 'RIESGO_ETIQUETA'
+            color_map   = COLORES_RIESGO
+            cat_orders  = {'RIESGO_ETIQUETA': ORDEN_RIESGO}
+            hover_extra = {'RIESGO_PREDICHO': ':.1%'}
+            leyenda_col = 'Riesgo predicho'
+            titulo_mapa = f"Riesgo predicho — Bogotá ({len(df_mapa):,} puntos)"
+
+        except Exception as exc:
+            st.warning(f"No se pudo calcular el riesgo: {exc}")
+            color_col   = 'GRAVEDAD'
+            color_map   = COLORES_GRAVEDAD
+            cat_orders  = {'GRAVEDAD': ORDEN_GRAVEDAD}
+            hover_extra = {}
+            leyenda_col = 'Gravedad'
+            titulo_mapa = f"Siniestros viales Bogotá ({len(df_mapa):,} puntos)"
+else:
+    color_col   = 'GRAVEDAD'
+    color_map   = COLORES_GRAVEDAD
+    cat_orders  = {'GRAVEDAD': ORDEN_GRAVEDAD}
+    hover_extra = {}
+    leyenda_col = 'Gravedad'
+    titulo_mapa = f"Siniestros viales Bogotá ({len(df_mapa):,} puntos)"
 
 # ── Mapa principal ─────────────────────────────────────────────────────────────
+hover_base = {
+    "DIRECCION": True,
+    "LOCALIDAD": True,
+    "CLASE_ACC": True,
+    "ANIO": True,
+    "LATITUD": False,
+    "LONGITUD": False,
+}
+hover_base.update(hover_extra)
+
 fig_mapa = px.scatter_map(
     df_mapa,
     lat="LATITUD",
     lon="LONGITUD",
-    color="GRAVEDAD",
-    color_discrete_map=COLORES_GRAVEDAD,
-    category_orders={"GRAVEDAD": ORDEN_GRAVEDAD},
+    color=color_col,
+    color_discrete_map=color_map,
+    category_orders=cat_orders,
     opacity=opacidad,
     size_max=tamano,
     zoom=10.5,
     center={"lat": 4.62, "lon": -74.08},
-    hover_data={
-        "DIRECCION": True,
-        "LOCALIDAD": True,
-        "CLASE_ACC": True,
-        "ANIO": True,
-        "LATITUD": False,
-        "LONGITUD": False,
-    },
+    hover_data=hover_base,
     labels={
         "GRAVEDAD": "Gravedad",
         "CLASE_ACC": "Tipo",
         "ANIO": "Año",
+        "RIESGO_ETIQUETA":  leyenda_col,
+        "RIESGO_PREDICHO":  "Probabilidad",
     },
-    title=f"Siniestros viales Bogotá ({len(df_mapa):,} puntos)",
+    title=titulo_mapa,
     map_style="open-street-map",
     height=600,
 )

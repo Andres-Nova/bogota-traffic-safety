@@ -19,7 +19,7 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          pip install pandas pyarrow pytest
+          pip install pandas pyarrow pytest scikit-learn lightgbm joblib numpy
 
       - name: Correr tests
         run: pytest tests/ -v
