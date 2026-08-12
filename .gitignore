@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Datos crudos — el parquet procesado SÍ se commitea
+# data/raw/ no existe aún; si se agrega, ignorar:
+data/raw/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Claude Code
+.claude/
