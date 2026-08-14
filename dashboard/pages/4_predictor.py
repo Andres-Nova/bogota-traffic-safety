@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from estilo import aplicar_estilo
 
 # ── Importa utilidades del dashboard ───────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -40,6 +41,7 @@ st.set_page_config(
     layout="wide",
 )
 
+aplicar_estilo()
 st.title("🚦 Predictor de Gravedad")
 st.markdown(
     "Describe un escenario de accidente y el modelo estima la **probabilidad "

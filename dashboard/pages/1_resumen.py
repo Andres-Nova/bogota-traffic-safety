@@ -8,12 +8,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
+from estilo import aplicar_estilo
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from utils import cargar_datos, sidebar_filtros, COLORES_GRAVEDAD, ORDEN_GRAVEDAD, MESES_ES
 
 st.set_page_config(page_title="Resumen — Siniestralidad Bogotá", page_icon="📊", layout="wide")
+aplicar_estilo()
 st.title("📊 Resumen Ejecutivo")
 st.caption("Bogotá D.C. · 2015–2021 · Fuente: SDM — Datos Abiertos Bogotá")
 
