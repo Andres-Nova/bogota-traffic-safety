@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
-from estilo import aplicar_estilo
+from estilo import aplicar_estilo, toggle_tema_sidebar, aplicar_tema_fig
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -18,6 +18,7 @@ from utils import (
 )
 
 st.set_page_config(page_title="Análisis — Siniestralidad Bogotá", page_icon="📈", layout="wide")
+toggle_tema_sidebar()
 aplicar_estilo()
 st.title("📈 Análisis Temporal y Estacional")
 st.caption("Bogotá D.C. · 2015–2021 · Fuente: SDM — Datos Abiertos Bogotá")
@@ -56,11 +57,8 @@ with col_dias:
         labels={"DIA_SEMANA_ES": "Día"},
         title="Siniestros por día de semana",
     )
-    fig_dias.update_layout(
-        legend_title_text="Gravedad",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
+    fig_dias.update_layout(legend_title_text="Gravedad")
+    aplicar_tema_fig(fig_dias)
     st.plotly_chart(fig_dias, use_container_width=True)
     st.caption(
         "Jueves y lunes concentran más siniestros — días laborales de alta movilidad. "
@@ -88,11 +86,8 @@ with col_mes:
         labels={"MES_ES": "Mes"},
         title="Siniestros por mes del año",
     )
-    fig_mes.update_layout(
-        legend_title_text="Gravedad",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
+    fig_mes.update_layout(legend_title_text="Gravedad")
+    aplicar_tema_fig(fig_mes)
     st.plotly_chart(fig_mes, use_container_width=True)
     st.caption(
         "Octubre, noviembre y diciembre muestran picos — fin de año con mayor tráfico y "
@@ -118,23 +113,21 @@ fig_evol = px.line(
     labels={"MES_ES": "Mes", "ANIO": "Año"},
     markers=True,
     title="Siniestros mensuales comparados por año (2015–2021)",
-    color_discrete_sequence=px.colors.qualitative.Safe,
+    color_discrete_sequence=px.colors.sequential.Greys[2:],
 )
-fig_evol.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    legend_title_text="Año",
-)
+fig_evol.update_layout(legend_title_text="Año")
+
 # Anotar caída COVID
-fig_evol.add_annotation(
-    x="Mar", y=mes_anio[(mes_anio["ANIO"] == 2020) & (mes_anio["MES"] == 3)]["Siniestros"].values[0]
-    if not mes_anio[(mes_anio["ANIO"] == 2020) & (mes_anio["MES"] == 3)].empty else 1000,
-    text="Inicio cuarentena<br>COVID-19",
-    showarrow=True, arrowhead=2, arrowcolor="#dc2626",
-    ax=60, ay=-50,
-    font=dict(size=11, color="#dc2626"),
-    bgcolor="rgba(255,255,255,0.85)",
-)
+anio_2020 = mes_anio[(mes_anio["ANIO"] == 2020) & (mes_anio["MES"] == 3)]
+if not anio_2020.empty:
+    fig_evol.add_annotation(
+        x="Mar", y=anio_2020["Siniestros"].values[0],
+        text="Inicio cuarentena<br>COVID-19",
+        showarrow=True, arrowhead=2,
+        ax=60, ay=-50,
+    )
+
+aplicar_tema_fig(fig_evol)
 st.plotly_chart(fig_evol, use_container_width=True)
 st.caption(
     "La caída brusca de 2020 a partir de marzo refleja las cuarentenas estrictas del COVID-19. "
@@ -157,35 +150,38 @@ heatmap_data.columns = [MESES_ES[c] for c in heatmap_data.columns]
 
 fig_heat = px.imshow(
     heatmap_data,
-    color_continuous_scale="OrRd",
+    color_continuous_scale="Greys",
     aspect="auto",
     labels=dict(color="Siniestros"),
     title="Concentración de siniestros por día y mes",
 )
 fig_heat.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
     xaxis_title="Mes",
     yaxis_title="Día de semana",
 )
+aplicar_tema_fig(fig_heat)
 st.plotly_chart(fig_heat, use_container_width=True)
 
 st.divider()
 
-# ── Tabla comparativa por localidad y año ─────────────────────────────────────
+# ── Tabla: siniestros por localidad y año ─────────────────────────────────────
 st.subheader("Tabla: siniestros por localidad y año")
 
 tabla = (
     df.groupby(["LOCALIDAD", "ANIO"])
     .size()
     .unstack(fill_value=0)
-    .sort_values(df["ANIO"].max(), ascending=False)
 )
 tabla["Total"] = tabla.sum(axis=1)
+# FIX: ordenar por "Total" (columna calculada), no por df["ANIO"].max()
+# que puede no existir como columna si el filtro excluye ese año.
 tabla = tabla.sort_values("Total", ascending=False)
 
 st.dataframe(
-    tabla.style.background_gradient(cmap="OrRd", subset=tabla.columns[:-1])
-         .format("{:,}"),
+    tabla.style.background_gradient(
+        cmap="Greys",
+        subset=[c for c in tabla.columns if c != "Total"]
+    ).format("{:,}"),
     use_container_width=True,
     height=420,
 )

@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import streamlit as st
-from estilo import aplicar_estilo
+from estilo import aplicar_estilo, toggle_tema_sidebar
 import plotly.express as px
 import pandas as pd
 from utils import (
@@ -21,6 +21,7 @@ from utils import (
 )
 
 st.set_page_config(page_title="Mapa — Siniestralidad Bogotá", page_icon="🗺️", layout="wide")
+toggle_tema_sidebar()
 aplicar_estilo()
 st.title("🗺️ Mapa de Siniestros Viales")
 st.caption("Bogotá D.C. · 2015–2021 · Fuente: SDM — Datos Abiertos Bogotá")

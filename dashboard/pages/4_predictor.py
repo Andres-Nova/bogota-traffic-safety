@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from estilo import aplicar_estilo
+from estilo import aplicar_estilo, toggle_tema_sidebar, aplicar_tema_fig
 
 # ── Importa utilidades del dashboard ───────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -41,6 +41,7 @@ st.set_page_config(
     layout="wide",
 )
 
+toggle_tema_sidebar()
 aplicar_estilo()
 st.title("🚦 Predictor de Gravedad")
 st.markdown(
@@ -207,6 +208,7 @@ with col_resultado:
                 height=300,
                 margin=dict(l=10, r=10, t=40, b=10),
             )
+            aplicar_tema_fig(fig_shap)
             st.plotly_chart(fig_shap, use_container_width=True)
             st.caption("🔴 Aumenta el riesgo  ·  🔵 Reduce el riesgo")
 

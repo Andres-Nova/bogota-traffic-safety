@@ -6,7 +6,7 @@ Período: 2015–2021 | 209,861 siniestros
 Punto de entrada multipage para Streamlit Cloud.
 """
 import streamlit as st
-from estilo import mostrar_header, mostrar_footer
+from estilo import mostrar_header, mostrar_footer, toggle_tema_sidebar
 
 st.set_page_config(
     page_title="Siniestralidad Vial Bogotá",
@@ -15,6 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+toggle_tema_sidebar()
 mostrar_header(
     titulo="Siniestralidad Vial — Bogotá D.C.",
     emoji="🚦",

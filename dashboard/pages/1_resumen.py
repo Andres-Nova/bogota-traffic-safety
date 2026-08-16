@@ -8,13 +8,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
-from estilo import aplicar_estilo
+from estilo import aplicar_estilo, toggle_tema_sidebar, aplicar_tema_fig
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from utils import cargar_datos, sidebar_filtros, COLORES_GRAVEDAD, ORDEN_GRAVEDAD, MESES_ES
 
 st.set_page_config(page_title="Resumen — Siniestralidad Bogotá", page_icon="📊", layout="wide")
+toggle_tema_sidebar()
 aplicar_estilo()
 st.title("📊 Resumen Ejecutivo")
 st.caption("Bogotá D.C. · 2015–2021 · Fuente: SDM — Datos Abiertos Bogotá")
@@ -62,17 +63,14 @@ fig_anual = px.bar(
 fig_anual.add_annotation(
     x=2020, y=anual[anual["ANIO"] == 2020]["conteo"].sum(),
     text="↓ COVID-19<br>–32% vs 2019",
-    showarrow=True, arrowhead=2, arrowcolor="#666",
+    showarrow=True, arrowhead=2,
     ax=60, ay=-40,
-    font=dict(size=12, color="#555"),
-    bgcolor="rgba(255,255,255,0.8)",
 )
 fig_anual.update_layout(
     legend_title_text="Gravedad",
     xaxis=dict(tickmode="linear", dtick=1),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
 )
+aplicar_tema_fig(fig_anual)
 st.plotly_chart(fig_anual, use_container_width=True)
 
 col_grav, col_loc = st.columns(2)
@@ -93,7 +91,8 @@ with col_grav:
         hole=0.45,
     )
     fig_grav.update_traces(textinfo="percent+label")
-    fig_grav.update_layout(showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
+    fig_grav.update_layout(showlegend=False)
+    aplicar_tema_fig(fig_grav)
     st.plotly_chart(fig_grav, use_container_width=True)
 
 # ── Top localidades ────────────────────────────────────────────────────────────
@@ -111,14 +110,11 @@ with col_loc:
         x="Siniestros", y="LOCALIDAD",
         orientation="h",
         color="Siniestros",
-        color_continuous_scale="Reds",
+        color_continuous_scale="Greys",
         labels={"LOCALIDAD": "Localidad"},
     )
-    fig_loc.update_layout(
-        coloraxis_showscale=False,
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
+    fig_loc.update_layout(coloraxis_showscale=False)
+    aplicar_tema_fig(fig_loc)
     st.plotly_chart(fig_loc, use_container_width=True)
 
 # ── Clase de accidente ─────────────────────────────────────────────────────────
@@ -144,9 +140,6 @@ fig_clase = px.bar(
     labels={"CLASE_ACC": "Clase de accidente"},
     title="Siniestros por tipo de accidente",
 )
-fig_clase.update_layout(
-    legend_title_text="Gravedad",
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-)
+fig_clase.update_layout(legend_title_text="Gravedad")
+aplicar_tema_fig(fig_clase)
 st.plotly_chart(fig_clase, use_container_width=True)
