@@ -251,5 +251,52 @@ if predecir:
             f"Combinación: **{clase_acc}** en **{localidad}** — "
             f"datos 2015–2024 · {total_acc:,} registros"
         )
+
+        # ── Desglose temporal: días pico y horas pico ─────────────────────
+        st.markdown("#### Distribución temporal en esta localidad")
+        col_d, col_h = st.columns(2)
+
+        with col_d:
+            if "DIA_SEMANA_ES" in df_ctx.columns:
+                conteo_dia = (
+                    df_ctx["DIA_SEMANA_ES"]
+                    .value_counts()
+                    .reindex(DIAS_ORDEN, fill_value=0)
+                )
+                fig_dia = go.Figure(go.Bar(
+                    x=conteo_dia.index.tolist(),
+                    y=conteo_dia.values,
+                    marker_color=["#e53e3e" if v == conteo_dia.max() else "#718096"
+                                  for v in conteo_dia.values],
+                ))
+                fig_dia.update_layout(
+                    title=f"Accidentes por día — {localidad}",
+                    xaxis_title="Día", yaxis_title="Accidentes",
+                    height=260, margin=dict(l=10, r=10, t=40, b=10),
+                )
+                aplicar_tema_fig(fig_dia)
+                st.plotly_chart(fig_dia, use_container_width=True)
+                dia_pico = conteo_dia.idxmax()
+                st.caption(f"🔴 Día con más accidentes: **{dia_pico}**")
+
+        with col_h:
+            if "HORA_NUM" in df_ctx.columns:
+                df_h = df_ctx["HORA_NUM"].dropna().astype(int)
+                conteo_hora = df_h.value_counts().sort_index()
+                fig_hora = go.Figure(go.Bar(
+                    x=conteo_hora.index.tolist(),
+                    y=conteo_hora.values,
+                    marker_color=["#e53e3e" if v == conteo_hora.max() else "#718096"
+                                  for v in conteo_hora.values],
+                ))
+                fig_hora.update_layout(
+                    title=f"Accidentes por hora — {localidad}",
+                    xaxis_title="Hora del día", yaxis_title="Accidentes",
+                    height=260, margin=dict(l=10, r=10, t=40, b=10),
+                )
+                aplicar_tema_fig(fig_hora)
+                st.plotly_chart(fig_hora, use_container_width=True)
+                hora_pico = int(conteo_hora.idxmax())
+                st.caption(f"🔴 Hora pico: **{hora_pico:02d}:00 – {hora_pico:02d}:59**")
 else:
     st.info("El contexto histórico aparecerá tras predecir.")
