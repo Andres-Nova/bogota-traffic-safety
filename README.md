@@ -1,4 +1,9 @@
-# Siniestralidad Vial — Bogotá D.C.
+# 🚦 Siniestralidad Vial — Bogotá D.C.
+
+[![Demo LIVE](https://img.shields.io/badge/Demo-LIVE-brightgreen?style=flat-square&logo=streamlit)](https://bogota-traffic-safety.streamlit.app/)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
+[![LightGBM](https://img.shields.io/badge/LightGBM-AUC%200.78-lightgrey?style=flat-square)](https://lightgbm.readthedocs.io)
+[![Tests](https://img.shields.io/badge/Tests-10%20passing-brightgreen?style=flat-square)](tests/)
 
 Construí este dashboard para analizar los patrones de accidentalidad vial en Bogotá usando los datos oficiales de la Secretaría Distrital de Movilidad, disponibles como datos abiertos. El resultado es una herramienta exploratoria que permite entender dónde, cuándo y con qué severidad ocurren los siniestros en la ciudad.
 
@@ -116,3 +121,10 @@ python src/descargar_datos.py
 pytest tests/ -v
 # 10 tests: integridad del parquet, coordenadas, gravedad, fechas, localidades
 ```
+
+---
+
+## ✍️ Autor
+
+**Andres Nova** — AI Solutions Architect  
+[andres-nova.github.io](https://andres-nova.github.io) · [LinkedIn](https://linkedin.com/in/andres-nova-data)
